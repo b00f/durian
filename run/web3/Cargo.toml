@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 ethereum-types = "0.8.0"
-durian = { path = "../.." }
+durian = { path = "../../durian" }
 simple_logger = "1.4.0"
 log = "0.4"
 hex-literal = "0.2.1"
@@ -33,5 +33,3 @@ tokio-proto = "0.1"
 tokio-service = "0.1"
 tokio-core = "0.1.6"
 tokio-io = "0.1.12"
-
-
