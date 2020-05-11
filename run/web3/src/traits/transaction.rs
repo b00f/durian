@@ -1,5 +1,5 @@
 use crate::types;
-use ethereum_types::{H160, H256, U256};
+use primitive_types::{H160, H256, U256};
 use jsonrpc_core::{BoxFuture, Result};
 use jsonrpc_derive::rpc;
 use types::CallRequest;

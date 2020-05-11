@@ -1,5 +1,5 @@
 use crate::types;
-use ethereum_types::{H160, U256};
+use primitive_types::{H160, U256};
 use jsonrpc_core::Result;
 use jsonrpc_derive::rpc;
 use types::BlockNumber;

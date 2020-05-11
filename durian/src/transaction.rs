@@ -1,6 +1,7 @@
 use super::Bytes;
-use ethereum_types::{Address, H256, U256};
 use parity_wasm::peek_size;
+use primitive_types::{H256, U256};
+use address::Address;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Action {

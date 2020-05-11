@@ -1,5 +1,6 @@
 use error::Result;
-use ethereum_types::{Address, H256, U256};
+use primitive_types::{H256, U256};
+use address::Address;
 
 pub struct StateAccount {
     pub nonce: U256,

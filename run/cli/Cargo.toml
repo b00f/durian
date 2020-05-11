@@ -5,8 +5,8 @@ authors = ["Mostafa <mostafa.sedaghat@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-ethereum-types = "0.8.0"
 durian = { path = "../../durian" }
+primitive-types = "0.7.2"
 simple_logger = "1.4.0"
 log = "0.4"
 hex-literal = "0.2.1"

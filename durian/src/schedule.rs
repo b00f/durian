@@ -1,6 +1,6 @@
 
 use std::collections::HashMap;
-use ethereum_types::U256;
+use primitive_types::U256;
 use wasm_cost::WasmCosts;
 
 /// Definition of schedules that can be applied to a version.

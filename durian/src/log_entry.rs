@@ -1,4 +1,5 @@
-use ethereum_types::{Address, H256};
+use primitive_types::H256;
+use address::Address;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LogEntry {

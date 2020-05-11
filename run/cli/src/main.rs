@@ -1,6 +1,6 @@
 extern crate blockchain;
 extern crate durian;
-extern crate ethereum_types;
+extern crate primitive_types;
 extern crate simple_logger;
 
 #[macro_use]
@@ -9,7 +9,7 @@ extern crate log;
 use blockchain::blockchain::Blockchain;
 use durian::execute;
 use durian::transaction::Transaction;
-use ethereum_types::{H256, U256};
+use primitive_types::{H256, U256};
 use log::Level;
 use std::fs::File;
 use std::io::Read;

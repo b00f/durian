@@ -1,6 +1,6 @@
 use crate::helpers;
 use crate::types;
-use ethereum_types::{H160, U256};
+use primitive_types::{H160, U256};
 use helpers::request::CallRequest as Request;
 use serde_derive::Deserialize;
 use types::Bytes;

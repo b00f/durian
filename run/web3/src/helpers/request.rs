@@ -1,5 +1,6 @@
 use crate::types;
-use ethereum_types::{Address, U256};
+use durian::address::Address;
+use primitive_types::U256;
 use types::Bytes;
 
 /// Transaction request coming from RPC

@@ -4,7 +4,7 @@ use crate::types;
 use blockchain::blockchain::Blockchain;
 use durian::execute;
 use durian::transaction::Transaction;
-use ethereum_types::{H160, H256, U256};
+use primitive_types::{H160, H256, U256};
 use std::io;
 use types::{TransactionRequest, TxReceipt};
 

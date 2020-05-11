@@ -1,5 +1,6 @@
 use super::Bytes;
-use ethereum_types::{Address, H256, U256};
+use address::Address;
+use primitive_types::{H256, U256};
 
 /// The type of the instruction.
 #[derive(Debug, PartialEq, Clone)]

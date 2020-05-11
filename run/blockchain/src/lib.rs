@@ -2,7 +2,7 @@
 extern crate log;
 
 extern crate bincode;
-extern crate ethereum_types;
+extern crate primitive_types;
 extern crate hex_literal;
 extern crate sha3;
 

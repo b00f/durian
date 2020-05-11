@@ -1,4 +1,5 @@
-use ethereum_types::{Address, H160, H256, U256};
+use durian::address::Address;
+use primitive_types::{H160, H256, U256};
 use serde_derive::{Deserialize, Serialize};
 
 /// Transaction request coming from RPC

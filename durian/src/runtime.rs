@@ -1,9 +1,10 @@
-use state::State;
 use error::{Error, Result};
-use ethereum_types::{Address, BigEndianHash, H256, U256};
-use panic_payload;
-use schedule::Schedule;
 use log_entry::LogEntry;
+use panic_payload;
+use primitive_types::{H256, U256};
+use schedule::Schedule;
+use state::State;
+use address::Address;
 use types::{ActionParams, ActionType};
 use wasmi::{MemoryRef, RuntimeArgs, RuntimeValue};
 
@@ -408,9 +409,10 @@ impl<'a> Runtime<'a> {
 	}
 
 	fn return_u256_ptr(&mut self, ptr: u32, val: U256) -> Result<()> {
-		let value: H256 = BigEndianHash::from_uint(&val);
+		let mut ret = H256::zero();
+		val.to_big_endian(ret.as_bytes_mut());
 		self.charge(|schedule| schedule.wasm().static_u256 as u64)?;
-		self.memory.set(ptr, value.as_bytes())?;
+		self.memory.set(ptr, ret.as_bytes())?;
 		Ok(())
 	}
 

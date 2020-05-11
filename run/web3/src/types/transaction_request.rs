@@ -1,11 +1,12 @@
 extern crate durian;
+use super::Bytes;
 use crate::helpers;
 use ansi_term::Colour;
-use ethereum_types::{Address, H160, H256, H512, U256};
+use durian::address::Address;
+use primitive_types::{H160, H256, H512, U256};
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::Deref;
-use super::Bytes;
 pub type Public = H512;
 use durian::transaction::Transaction;
 

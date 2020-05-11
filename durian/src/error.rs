@@ -1,5 +1,6 @@
-use ethereum_types::{Address, H256};
+use primitive_types::H256;
 use snafu::Snafu;
+use address::Address;
 use wasmi::TrapKind;
 
 #[derive(Debug, Clone, Snafu)]

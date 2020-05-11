@@ -1,8 +1,9 @@
 use error::Result;
-use ethereum_types::{Address, H256, U256};
 use log::debug;
+use primitive_types::{H256, U256};
 use provider::Provider;
 use std::collections::HashMap;
+use address::Address;
 
 #[derive(Debug, Clone, PartialEq)]
 struct AccountInfo {
@@ -41,7 +42,7 @@ impl<'a> State<'a> {
         let acc = self.account(address)?;
         Ok(acc.nonce)
     }
-    
+
     pub fn balance(&mut self, address: &Address) -> Result<U256> {
         let acc = self.account(address)?;
         Ok(acc.balance)
@@ -135,7 +136,6 @@ impl<'a> State<'a> {
 
         Ok(())
     }
-
 
     fn fetch_account(&mut self, address: &Address) -> Result<()> {
         if self.accounts.contains_key(address) {

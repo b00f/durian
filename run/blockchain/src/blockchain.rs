@@ -1,10 +1,11 @@
 use crate::account::Account;
 use crate::block::Block;
 use durian::error::{Error, Result};
+use durian::address::Address;
 use durian::execute::ResultData;
 use durian::provider::{Provider, StateAccount};
 use durian::transaction::{Action, Transaction};
-use ethereum_types::{Address, H160, H256, U256};
+use primitive_types::{H160, H256, U256};
 use hex_literal::hex;
 use sha3::{Digest, Keccak256};
 use std::collections::HashMap;

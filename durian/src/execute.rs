@@ -1,13 +1,14 @@
 use env;
 use error::{Error, Result};
-use ethereum_types::{Address, U256};
 use log_entry::LogEntry;
 use parser;
+use primitive_types::U256;
 use provider::Provider;
 use runtime::Runtime;
 use schedule::Schedule;
 use state::State;
 use transaction::{Action, Transaction};
+use address::Address;
 use types::{ActionParams, ActionType};
 use utils;
 use wasm_cost::WasmCosts;
