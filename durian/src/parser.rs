@@ -1,7 +1,7 @@
-use error::{Error, Result};
+use error::Error;
 use parity_wasm::elements::{self, Deserialize};
 use pwasm_utils::{self, rules};
-use types::{ActionParams};
+use types::ActionParams;
 use wasm_cost::WasmCosts;
 
 fn gas_rules(wasm_costs: &WasmCosts) -> rules::Set {
@@ -32,10 +32,7 @@ fn gas_rules(wasm_costs: &WasmCosts) -> rules::Set {
 /// Splits payload to code and data according to params_type, also
 /// loads the module instance from payload and injects gas counter according
 /// to schedule.
-pub fn payload<'a>(
-	params: &'a ActionParams,
-	wasm_costs: &WasmCosts,
-) -> Result<elements::Module> {
+pub fn payload<'a>(params: &'a ActionParams, wasm_costs: &WasmCosts) -> Result<elements::Module, Error> {
 	let mut cursor = ::std::io::Cursor::new(&params.code[..]);
 
 	let deserialized_module =

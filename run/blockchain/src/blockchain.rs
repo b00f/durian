@@ -1,12 +1,12 @@
 use crate::account::Account;
 use crate::block::Block;
-use durian::error::{Error, Result};
 use durian::address::Address;
+use durian::error::Error;
 use durian::execute::ResultData;
 use durian::provider::{Provider, StateAccount};
 use durian::transaction::{Action, Transaction};
-use primitive_types::{H160, H256, U256};
 use hex_literal::hex;
+use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
 use std::collections::HashMap;
 use std::time::SystemTime;
@@ -134,7 +134,7 @@ impl Blockchain {
         acc.nonce = acc.nonce + U256::from(1)
     }
 
-    fn account(&self, address: &Address) -> Result<&Account> {
+    fn account(&self, address: &Address) -> Result<&Account, Error> {
         for (_, acc) in self.accounts.iter() {
             if acc.address == *address {
                 return Ok(acc);
@@ -144,7 +144,7 @@ impl Blockchain {
         Err(Error::InvalidAddress { address: *address })
     }
 
-    fn account_mut(&mut self, address: &Address) -> Result<&mut Account> {
+    fn account_mut(&mut self, address: &Address) -> Result<&mut Account, Error> {
         for (_, acc) in self.accounts.iter_mut() {
             if acc.address == *address {
                 return Ok(acc);
@@ -160,7 +160,7 @@ impl Blockchain {
         return txhash;
     }
 
-    pub fn get_transaction_details(&mut self, hash: H256) -> Result<(Transaction, ResultData)> {
+    pub fn get_transaction_details(&mut self, hash: H256) -> Result<(Transaction, ResultData), Error> {
         let tx = self.transactions.get(&hash).unwrap();
         return Ok(tx.clone());
     }
@@ -175,7 +175,7 @@ impl Blockchain {
 }
 
 impl Provider for Blockchain {
-    fn account(&self, address: &Address) -> Result<StateAccount> {
+    fn account(&self, address: &Address) -> Result<StateAccount, Error> {
         let acc = self.account(address)?;
         Ok(StateAccount {
             balance: U256::from(acc.balance),
@@ -184,7 +184,7 @@ impl Provider for Blockchain {
         })
     }
 
-    fn create_contract(&mut self, address: &Address, code: &Vec<u8>) -> Result<()> {
+    fn create_contract(&mut self, address: &Address, code: &Vec<u8>) -> Result<(), Error> {
         let name = format!("contract_{}", self.counter + 1);
         let acc = Account::new(*address, U256::zero(), U256::zero(), code.clone());
         self.accounts.insert(name, acc);
@@ -192,7 +192,7 @@ impl Provider for Blockchain {
         Ok(())
     }
 
-    fn storage_at(&self, address: &Address, key: &H256) -> Result<H256> {
+    fn storage_at(&self, address: &Address, key: &H256) -> Result<H256, Error> {
         let acc = self.account(address)?;
         match acc.storage.get(key) {
             Some(storage) => Ok(*storage),
@@ -200,14 +200,14 @@ impl Provider for Blockchain {
         }
     }
 
-    fn set_storage(&mut self, address: &Address, key: &H256, value: &H256) -> Result<()> {
+    fn set_storage(&mut self, address: &Address, key: &H256, value: &H256) -> Result<(), Error> {
         let acc = self.account_mut(address).unwrap();
         let val = acc.storage.entry(*key).or_insert(*value);
         *val = *value;
         Ok(())
     }
 
-    fn block_hash(&self, num: u64) -> Result<H256> {
+    fn block_hash(&self, num: u64) -> Result<H256, Error> {
         Ok(self.blocks.get(num as usize).unwrap().hash())
     }
 
@@ -225,15 +225,15 @@ impl Provider for Blockchain {
         self.blocks.last().unwrap().num
     }
 
-    fn block_author(&self) -> Result<Address> {
+    fn block_author(&self) -> Result<Address, Error> {
         Ok(self.address_from_alias("alice"))
     }
 
-    fn difficulty(&self) -> Result<U256> {
+    fn difficulty(&self) -> Result<U256, Error> {
         Err(Error::NotSupported)
     }
 
-    fn gas_limit(&self) -> Result<U256> {
+    fn gas_limit(&self) -> Result<U256, Error> {
         Ok(U256::from(1000000))
     }
 
@@ -241,7 +241,7 @@ impl Provider for Blockchain {
         self.account(address).is_ok()
     }
 
-    fn update_account(&mut self, address: &Address, bal: &U256, nonce: &U256) -> Result<()> {
+    fn update_account(&mut self, address: &Address, bal: &U256, nonce: &U256) -> Result<(), Error> {
         let mut acc = self.account_mut(address).unwrap();
         acc.balance = *bal;
         acc.nonce = *nonce;

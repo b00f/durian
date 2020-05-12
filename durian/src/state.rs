@@ -1,4 +1,4 @@
-use error::Result;
+use error::Error;
 use log::debug;
 use primitive_types::{H256, U256};
 use provider::Provider;
@@ -38,12 +38,12 @@ impl<'a> State<'a> {
     }
 
     #[allow(dead_code)]
-    pub fn nonce(&mut self, address: &Address) -> Result<U256> {
+    pub fn nonce(&mut self, address: &Address) -> Result<U256, Error> {
         let acc = self.account(address)?;
         Ok(acc.nonce)
     }
 
-    pub fn balance(&mut self, address: &Address) -> Result<U256> {
+    pub fn balance(&mut self, address: &Address) -> Result<U256, Error> {
         let acc = self.account(address)?;
         Ok(acc.balance)
     }
@@ -61,23 +61,23 @@ impl<'a> State<'a> {
         self.provider.block_number()
     }
 
-    pub fn block_hash(&self, block_no: u64) -> Result<H256> {
+    pub fn block_hash(&self, block_no: u64) -> Result<H256, Error> {
         self.provider.block_hash(block_no)
     }
 
-    pub fn block_author(&self) -> Result<Address> {
+    pub fn block_author(&self) -> Result<Address, Error> {
         self.provider.block_author()
     }
 
-    pub fn difficulty(&self) -> Result<U256> {
+    pub fn difficulty(&self) -> Result<U256, Error> {
         self.provider.difficulty()
     }
 
-    pub fn gas_limit(&self) -> Result<U256> {
+    pub fn gas_limit(&self) -> Result<U256, Error> {
         self.provider.gas_limit()
     }
 
-    pub fn storage_at(&mut self, address: &Address, key: &H256) -> Result<H256> {
+    pub fn storage_at(&mut self, address: &Address, key: &H256) -> Result<H256, Error> {
         // From parity ethereum
         // If storage root is empty RLP, then early return zero value. Practically, this makes it so that if
         // `original_storage_cache` is used, then `storage_cache` will always remain empty.
@@ -98,13 +98,13 @@ impl<'a> State<'a> {
         acc.0.storage.insert(*key, (*value, true));
     }
 
-    fn account_mut(&mut self, address: &Address) -> Result<&mut (AccountInfo, bool)> {
+    fn account_mut(&mut self, address: &Address) -> Result<&mut (AccountInfo, bool), Error> {
         self.fetch_account(address)?;
 
         return Ok(self.accounts.get_mut(address).unwrap());
     }
 
-    fn account(&mut self, address: &Address) -> Result<&AccountInfo> {
+    fn account(&mut self, address: &Address) -> Result<&AccountInfo, Error> {
         self.fetch_account(address)?;
 
         return Ok(&self.accounts.get(address).unwrap().0);
@@ -116,7 +116,7 @@ impl<'a> State<'a> {
         acc.1 = true;
     }
 
-    pub fn update_state(&mut self) -> Result<()> {
+    pub fn update_state(&mut self) -> Result<(), Error> {
         for (addr, acc) in &self.accounts {
             if acc.1 {
                 if !self.provider.exist(addr) {
@@ -137,7 +137,7 @@ impl<'a> State<'a> {
         Ok(())
     }
 
-    fn fetch_account(&mut self, address: &Address) -> Result<()> {
+    fn fetch_account(&mut self, address: &Address) -> Result<(), Error> {
         if self.accounts.contains_key(address) {
             return Ok(());
         }
@@ -153,7 +153,7 @@ impl<'a> State<'a> {
         }
     }
 
-    fn fetch_storage(&mut self, address: &Address, key: &H256) -> Result<()> {
+    fn fetch_storage(&mut self, address: &Address, key: &H256) -> Result<(), Error> {
         let acc = self.account(address)?;
         if acc.storage.contains_key(key) {
             return Ok(());

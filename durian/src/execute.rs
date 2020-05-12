@@ -1,5 +1,6 @@
+use address::Address;
 use env;
-use error::{Error, Result};
+use error::Error;
 use log_entry::LogEntry;
 use parser;
 use primitive_types::U256;
@@ -8,7 +9,6 @@ use runtime::Runtime;
 use schedule::Schedule;
 use state::State;
 use transaction::{Action, Transaction};
-use address::Address;
 use types::{ActionParams, ActionType};
 use utils;
 use wasm_cost::WasmCosts;
@@ -21,7 +21,7 @@ pub struct ResultData {
 	pub logs: Vec<LogEntry>,
 }
 
-pub fn execute(transaction: &Transaction, provider: &mut dyn Provider) -> Result<ResultData> {
+pub fn execute(provider: &mut dyn Provider, transaction: &Transaction) -> Result<ResultData, Error> {
 	let params = match &transaction.action {
 		Action::Create(code, salt) => {
 			let new_address = utils::contract_address(&transaction.sender, &code, &salt);

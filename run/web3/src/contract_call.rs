@@ -18,7 +18,7 @@ pub fn create(bc: &mut Blockchain, request: TransactionRequest) -> Result<H256, 
 	bc.commit();
 	let tx1 =
 		Transaction::make_create_embedded_code(from, value, gas, U256::zero(), code, H256::zero());
-	let ret1 = execute::execute(&tx1.clone(), bc).unwrap();
+	let ret1 = execute::execute(bc, &tx1.clone()).unwrap();
 	let tx_hash = bc.add_transactions(tx1, ret1);
 	bc.inc_nonce("naga");
 	bc.commit();

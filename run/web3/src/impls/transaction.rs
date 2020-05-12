@@ -73,7 +73,7 @@ impl TransactionRPC for TransactionRPCImpl {
 			params_vec,
 		);
 
-		let ret3 =execute::execute(&tx_call.clone(), &mut *bc).unwrap();
+		let ret3 =execute::execute(&mut *bc, &tx_call.clone()).unwrap();
 		println!("the value inside ret3 {:?}", ret3);
 		let res = Bytes::new(ret3.data);
 		Ok(res)

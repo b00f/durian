@@ -130,5 +130,3 @@ impl From<wasmi::Error> for Error {
 }
 
 impl wasmi::HostError for Error {}
-
-pub type Result<T> = ::std::result::Result<T, Error>;

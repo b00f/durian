@@ -1,4 +1,4 @@
-use error::{Error, Result};
+use error::{Error};
 use log_entry::LogEntry;
 use panic_payload;
 use primitive_types::{H256, U256};
@@ -41,7 +41,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Loads 256-bit hash from the specified sandboxed memory pointer
-	fn h256_at(&self, ptr: u32) -> Result<H256> {
+	fn h256_at(&self, ptr: u32) -> Result<H256, Error> {
 		let mut buf = [0u8; 32];
 		self.memory.get_into(ptr, &mut buf[..])?;
 
@@ -49,7 +49,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Loads 160-bit hash (Ethereum address) from the specified sandboxed memory pointer
-	fn address_at(&self, ptr: u32) -> Result<Address> {
+	fn address_at(&self, ptr: u32) -> Result<Address, Error> {
 		let mut buf = [0u8; 20];
 		self.memory.get_into(ptr, &mut buf[..])?;
 
@@ -57,7 +57,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Loads 256-bit integer represented with bigendian from the specified sandboxed memory pointer
-	fn u256_at(&self, ptr: u32) -> Result<U256> {
+	fn u256_at(&self, ptr: u32) -> Result<U256, Error> {
 		let mut buf = [0u8; 32];
 		self.memory.get_into(ptr, &mut buf[..])?;
 
@@ -82,7 +82,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Charge gas according to closure
-	pub fn charge<F>(&mut self, f: F) -> Result<()>
+	pub fn charge<F>(&mut self, f: F) -> Result<(), Error>
 	where
 		F: FnOnce(&Schedule) -> u64,
 	{
@@ -95,7 +95,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Adjusted charge of gas which scales actual charge according to the wasm opcode counting coefficient
-	pub fn adjusted_charge<F>(&mut self, f: F) -> Result<()>
+	pub fn adjusted_charge<F>(&mut self, f: F) -> Result<(), Error>
 	where
 		F: FnOnce(&Schedule) -> u64,
 	{
@@ -107,7 +107,7 @@ impl<'a> Runtime<'a> {
 	/// Charge gas provided by the closure
 	///
 	/// Closure also can return overflowing flag as None in gas cost.
-	pub fn overflow_charge<F>(&mut self, f: F) -> Result<()>
+	pub fn overflow_charge<F>(&mut self, f: F) -> Result<(), Error>
 	where
 		F: FnOnce(&Schedule) -> Option<u64>,
 	{
@@ -126,7 +126,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Same as overflow_charge, but with amount adjusted by wasm opcodes coeff
-	pub fn adjusted_overflow_charge<F>(&mut self, f: F) -> Result<()>
+	pub fn adjusted_overflow_charge<F>(&mut self, f: F) -> Result<(), Error>
 	where
 		F: FnOnce(&Schedule) -> Option<u64>,
 	{
@@ -138,7 +138,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Read from the storage to wasm memory
-	pub fn storage_read(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn storage_read(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let key = self.h256_at(args.nth_checked(0)?)?;
 		let val_ptr: u32 = args.nth_checked(1)?;
 
@@ -152,7 +152,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Write to storage from wasm memory
-	pub fn storage_write(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn storage_write(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let key = self.h256_at(args.nth_checked(0)?)?;
 		let val_ptr: u32 = args.nth_checked(1)?;
 
@@ -185,7 +185,7 @@ impl<'a> Runtime<'a> {
 	/// Syscall takes 2 arguments:
 	/// * pointer in sandboxed memory where result is
 	/// * the length of the result
-	pub fn ret(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn ret(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let ptr: u32 = args.nth_checked(0)?;
 		let len: u32 = args.nth_checked(1)?;
 
@@ -202,7 +202,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Query current gas left for execution
-	pub fn gas_left(&self) -> Result<u64> {
+	pub fn gas_left(&self) -> Result<u64, Error> {
 		if self.gas_counter > self.gas_limit {
 			return Err(Error::InvalidGasState);
 		}
@@ -210,7 +210,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// General gas charging extern.
-	fn gas(&mut self, args: RuntimeArgs) -> Result<()> {
+	fn gas(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let amount: u32 = args.nth_checked(0)?;
 		if self.charge_gas(amount as u64) {
 			Ok(())
@@ -225,7 +225,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Write input bytes to the memory location using the passed pointer
-	fn fetch_input(&mut self, args: RuntimeArgs) -> Result<()> {
+	fn fetch_input(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let ptr: u32 = args.nth_checked(0)?;
 
 		let args_len = self.params.args.len() as u64;
@@ -238,7 +238,7 @@ impl<'a> Runtime<'a> {
 	/// User panic
 	///
 	/// Contract can invoke this when he encounters unrecoverable error.
-	fn panic(&mut self, args: RuntimeArgs) -> Result<()> {
+	fn panic(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let payload_ptr: u32 = args.nth_checked(0)?;
 		let payload_len: u32 = args.nth_checked(1)?;
 
@@ -269,7 +269,7 @@ impl<'a> Runtime<'a> {
 		use_val: bool,
 		call_type: ActionType,
 		args: RuntimeArgs,
-	) -> Result<RuntimeValue> {
+	) -> Result<RuntimeValue, Error> {
 		trace!(target: "wasm", "runtime: CALL({:?})", call_type);
 
 		let gas: u64 = args.nth_checked(0)?;
@@ -385,7 +385,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Message call
-	fn ccall(&mut self, args: RuntimeArgs) -> Result<RuntimeValue> {
+	fn ccall(&mut self, args: RuntimeArgs) -> Result<RuntimeValue, Error> {
 		self.do_call(true, ActionType::Call, args)
 	}
 
@@ -402,13 +402,13 @@ impl<'a> Runtime<'a> {
 	}
 	*/
 
-	fn return_address_ptr(&mut self, ptr: u32, val: Address) -> Result<()> {
+	fn return_address_ptr(&mut self, ptr: u32, val: Address) -> Result<(), Error> {
 		self.charge(|schedule| schedule.wasm().static_address as u64)?;
 		self.memory.set(ptr, val.as_bytes())?;
 		Ok(())
 	}
 
-	fn return_u256_ptr(&mut self, ptr: u32, val: U256) -> Result<()> {
+	fn return_u256_ptr(&mut self, ptr: u32, val: U256) -> Result<(), Error> {
 		let mut ret = H256::zero();
 		val.to_big_endian(ret.as_bytes_mut());
 		self.charge(|schedule| schedule.wasm().static_u256 as u64)?;
@@ -417,7 +417,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Returns value (in Wei) passed to contract
-	pub fn value(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn value(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let val = self.params.value;
 		self.return_u256_ptr(args.nth_checked(0)?, val)
 	}
@@ -428,7 +428,7 @@ impl<'a> Runtime<'a> {
 		code_ptr: u32,
 		code_len: u32,
 		result_ptr: u32,
-	) -> Result<RuntimeValue> {
+	) -> Result<RuntimeValue, Error> {
 		// TODO: Not completed
 		/*
 		let code = self.memory.get(code_ptr, code_len as usize)?;
@@ -489,7 +489,7 @@ impl<'a> Runtime<'a> {
 	/// * code_ptr - pointer to the code data
 	/// * code_len - lenght of the code data
 	/// * result_ptr - pointer to write an address of the newly created contract
-	pub fn create(&mut self, args: RuntimeArgs) -> Result<RuntimeValue> {
+	pub fn create(&mut self, args: RuntimeArgs) -> Result<RuntimeValue, Error> {
 		//
 		// method signature:
 		//   fn create(endowment: *const u8, code_ptr: *const u8, code_len: u32, result_ptr: *mut u8) -> i32;
@@ -520,7 +520,7 @@ impl<'a> Runtime<'a> {
 		})
 	}
 
-	fn debug(&mut self, args: RuntimeArgs) -> Result<()> {
+	fn debug(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		trace!(target: "wasm", "Contract debug message: {}", {
 			let msg_ptr: u32 = args.nth_checked(0)?;
 			let msg_len: u32 = args.nth_checked(1)?;
@@ -533,7 +533,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	/// Pass suicide to state runtime
-	pub fn suicide(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn suicide(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let refund_address = self.address_at(args.nth_checked(0)?)?;
 
 		// TODO: Not completed
@@ -562,7 +562,7 @@ impl<'a> Runtime<'a> {
 	}
 
 	///	Signature: `fn block_hash(number: i64, dest: *mut u8)`
-	pub fn block_hash(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn block_hash(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		self.adjusted_charge(|schedule| schedule.blockhash_gas as u64)?;
 		let hash = self.state.block_hash(args.nth_checked::<u64>(0)?)?;
 		self.memory.set(args.nth_checked(1)?, hash.as_bytes())?;
@@ -571,36 +571,36 @@ impl<'a> Runtime<'a> {
 	}
 
 	///	Signature: `fn blocknumber() -> i64`
-	pub fn block_number(&mut self) -> Result<RuntimeValue> {
+	pub fn block_number(&mut self) -> Result<RuntimeValue, Error> {
 		Ok(RuntimeValue::from(self.state.block_number()))
 	}
 
 	///	Signature: `fn block_author(dest: *mut u8)`
-	pub fn block_author(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn block_author(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let author = self.state.block_author()?;
 		self.return_address_ptr(args.nth_checked(0)?, author)
 	}
 
 	///	Signature: `fn difficulty(dest: *mut u8)`
-	pub fn difficulty(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn difficulty(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let difficulty = self.state.difficulty()?;
 		self.return_u256_ptr(args.nth_checked(0)?, difficulty)
 	}
 
 	///	Signature: `fn gaslimit(dest: *mut u8)`
-	pub fn gaslimit(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn gaslimit(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let gas_limit = self.state.gas_limit()?;
 		self.return_u256_ptr(args.nth_checked(0)?, gas_limit)
 	}
 
 	///	Signature: `timestamp() -> i64`
-	pub fn timestamp(&mut self) -> Result<RuntimeValue> {
+	pub fn timestamp(&mut self) -> Result<RuntimeValue, Error> {
 		let timestamp = self.state.timestamp();
 		Ok(RuntimeValue::from(timestamp))
 	}
 
 	///	Signature: `fn gasleft() -> i64`
-	pub fn gasleft(&mut self) -> Result<RuntimeValue> {
+	pub fn gasleft(&mut self) -> Result<RuntimeValue, Error> {
 		Ok(RuntimeValue::from(
 			self.gas_left()? * self.schedule.wasm().opcodes_mul as u64
 				/ self.schedule.wasm().opcodes_div as u64,
@@ -608,25 +608,25 @@ impl<'a> Runtime<'a> {
 	}
 
 	///	Signature: `fn address(dest: *mut u8)`
-	pub fn address(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn address(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let address = self.params.address;
 		self.return_address_ptr(args.nth_checked(0)?, address)
 	}
 
 	///	Signature: `sender(dest: *mut u8)`
-	pub fn sender(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn sender(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let sender = self.params.sender;
 		self.return_address_ptr(args.nth_checked(0)?, sender)
 	}
 
 	///	Signature: `origin(dest: *mut u8)`
-	pub fn origin(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn origin(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let origin = self.params.origin;
 		self.return_address_ptr(args.nth_checked(0)?, origin)
 	}
 
 	///	Signature: `fn elog(topic_ptr: *const u8, topic_count: u32, data_ptr: *const u8, data_len: u32)`
-	pub fn elog(&mut self, args: RuntimeArgs) -> Result<()> {
+	pub fn elog(&mut self, args: RuntimeArgs) -> Result<(), Error> {
 		let topic_ptr: u32 = args.nth_checked(0)?;
 		let topic_count: u32 = args.nth_checked(1)?;
 		let data_ptr: u32 = args.nth_checked(2)?;
@@ -675,7 +675,7 @@ impl<'a> Runtime<'a> {
 		self.state.init_code(address, code);
 	}
 
-	pub fn update_state(&mut self) -> Result<()> {
+	pub fn update_state(&mut self) -> Result<(), Error> {
 		self.state.update_state()
 	}
 }

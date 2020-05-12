@@ -46,7 +46,7 @@ fn main() {
         H256::zero(),
     );
 
-    let ret1 = execute::execute(&tx1, &mut bc).unwrap();
+    let ret1 = execute::execute(&mut bc, &tx1).unwrap();
 
     //info!("ret1: {:?}", ret1);
     bc.inc_nonce("alice");
@@ -74,7 +74,7 @@ fn main() {
         params2,
     );
 
-    let ret2 = execute::execute(&tx2, &mut bc).unwrap();
+    let ret2 = execute::execute(&mut bc, &tx2).unwrap();
     info!("ret2: {:?}", ret2);
     bc.inc_nonce("alice");
     bc.commit();
@@ -89,7 +89,7 @@ fn main() {
         U256::zero(),
         params3,
     );
-    let ret3 = execute::execute(&tx3, &mut bc).unwrap();
+    let ret3 = execute::execute(&mut bc, &tx3).unwrap();
     info!("ret3: {:?}", ret3);
     bc.inc_nonce("alice");
     bc.commit();
@@ -106,7 +106,7 @@ fn main() {
         U256::zero(),
         params4,
     );
-    let ret4 = execute::execute(&tx4, &mut bc).unwrap();
+    let ret4 = execute::execute(&mut bc, &tx4).unwrap();
     info!("ret4: {:?}", ret4);
     bc.inc_nonce("bob");
     bc.commit();
