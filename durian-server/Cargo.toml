@@ -1,0 +1,24 @@
+[package]
+name = "durian-server"
+version = "0.1.0"
+authors = ["Mostafa <mostafa.sedaghat@gmail.com>"]
+edition = "2018"
+
+build = "src/build.rs"
+
+[[bin]]
+name = "durian"
+path = "src/main.rs"
+
+[build-dependencies]
+capnpc = { git = "https://github.com/capnproto/capnproto-rust" }
+
+[dependencies]
+capnp =  { git = "https://github.com/capnproto/capnproto-rust" }
+capnp-rpc = { git = "https://github.com/capnproto/capnproto-rust" }
+futures = "0.3.0"
+tokio = { version = "0.2.0", features = ["net", "rt-util", "tcp", "macros"]}
+tokio-util = { version = "0.3.0", features = ["compat"] }
+durian = { path = "../durian" }
+primitive-types = "0.7.2"
+async-std = "1.5.0"

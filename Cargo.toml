@@ -2,7 +2,9 @@
 
 members = [
     "durian",
+    "durian-server",
     "run/blockchain",
+    "run/durian-client",
     "run/cli",
     "run/web3",
 ]
