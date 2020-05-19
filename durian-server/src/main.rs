@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate capnp_rpc;
 
+#[macro_use]
+extern crate log;
+
 pub mod durian_capnp {
     include!(concat!(env!("OUT_DIR"), "/durian_capnp.rs"));
 }
@@ -13,10 +16,12 @@ use executor_impl::ExecutorImpl;
 use futures::{AsyncReadExt, FutureExt, TryFutureExt};
 use std::net::ToSocketAddrs;
 use tokio::net::TcpListener;
-use tokio::sync::mpsc;
+use log::Level;
 
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    simple_logger::init_with_level(Level::Debug).unwrap();
+
     let args: Vec<String> = ::std::env::args().collect();
     if args.len() != 2 {
         println!("usage: {} HOST:PORT", args[0]);

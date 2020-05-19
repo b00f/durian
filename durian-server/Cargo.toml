@@ -22,3 +22,5 @@ tokio-util = { version = "0.3.0", features = ["compat"] }
 durian = { path = "../durian" }
 primitive-types = "0.7.2"
 async-std = "1.5.0"
+log = "0.4"
+simple_logger = "1.4.0"

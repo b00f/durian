@@ -50,8 +50,8 @@ pub enum Error {
     #[snafu(display("Error occurred while logging an event"))]
     Log,
 
-    #[snafu(display("Other unspecified error"))]
-    Other,
+    #[snafu(display("Error: {}", msg))]
+    Other {msg: String},
 
     #[snafu(display("Unreachable instruction encountered"))]
     Unreachable,
@@ -90,7 +90,7 @@ impl From<wasmi::Trap> for Error {
             TrapKind::InvalidConversionToInt => Error::InvalidConversionToInt,
             TrapKind::UnexpectedSignature => Error::InvalidVirtualCall,
             TrapKind::StackOverflow => Error::StackOverflow,
-            TrapKind::Host(_) => Error::Other,
+            TrapKind::Host(_) => Error::Other{msg: "Host error".to_string()},
         }
     }
 }

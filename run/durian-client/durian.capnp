@@ -1,6 +1,10 @@
 @0xd767186f03554834;
 
-
+struct Account {
+  nonce @0: Data;
+  balance @1: Data;
+  code @2: Data;
+}
 
 struct Transaction {
   sender @0: Data;
@@ -37,6 +41,16 @@ interface Executor {
 }
 
 interface Provider {
-  getStorage @0 (address: Data) -> (storage: Data);
-  setStorage @1 (address: Data, storage: Data) -> ();
+  exist @0          ( address: Data                             ) -> (exist: Bool);
+  account @1        ( address: Data                             ) -> (account: Account);
+  updateAccount @2  ( address: Data, balance: Data, nonce: Data ) -> ();
+  createContract @3 ( address: Data, code: Data                 ) -> ();
+  storageAt @4      ( address: Data, key: Data                  ) -> (storage: Data);
+  setStorage @5     ( address: Data, key: Data, value: Data     ) -> ();
+  timestamp @6      (                                           ) -> (timestamp: UInt64);
+  blockNumber @7    (                                           ) -> (number: UInt64);
+  blockHash @8      ( blockNo: UInt64                           ) -> (hash: Data);
+  blockAuthor @9    (                                           ) -> (address: Data);
+  difficulty @10    (                                           ) -> (difficulty: Data);
+  gasLimit @11      (                                           ) -> (gasLimit: Data);
 }

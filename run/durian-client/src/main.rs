@@ -4,6 +4,11 @@ extern crate capnp_rpc;
 #[macro_use]
 extern crate lazy_static;
 
+#[macro_use]
+extern crate log;
+
+extern crate simple_logger;
+
 pub mod durian_capnp {
     include!(concat!(env!("OUT_DIR"), "/durian_capnp.rs"));
 }
@@ -15,7 +20,9 @@ use capnp_rpc::{rpc_twoparty_capnp, twoparty, RpcSystem};
 use durian::address::Address;
 use durian::Bytes;
 use durian_capnp::executor;
+use futures::task::LocalSpawn;
 use futures::AsyncReadExt;
+use futures::FutureExt;
 use log::Level;
 use primitive_types::{H256, U256};
 use provider_impl::ProviderImpl;
@@ -30,6 +37,8 @@ lazy_static! {
 }
 
 fn main() {
+    simple_logger::init_with_level(Level::Debug).unwrap();
+
     let args: Vec<String> = ::std::env::args().collect();
     if args.len() != 2 {
         println!("usage: {} HOST:PORT", args[0]);
@@ -45,7 +54,7 @@ fn main() {
     let mut exec = futures::executor::LocalPool::new();
     let spawner = exec.spawner();
 
-    let result: Result<(), Box<dyn std::error::Error>> = exec.run_until(async move {
+    let _result: Result<(), Box<dyn std::error::Error>> = exec.run_until(async move {
         let stream = async_std::net::TcpStream::connect(&addr).await?;
         stream.set_nodelay(true)?;
         let (reader, writer) = stream.split();
@@ -58,9 +67,9 @@ fn main() {
         let mut rpc_system = RpcSystem::new(rpc_network, None);
         let executor: executor::Client = rpc_system.bootstrap(rpc_twoparty_capnp::Side::Server);
 
-        //spawner
-        //    .spawn_local_obj(Box::pin(rpc_system.map(|_| ())).into())
-        //    .unwrap();
+        spawner
+            .spawn_local_obj(Box::pin(rpc_system.map(|_| ())).into())
+            .unwrap();
 
         // -------------------------------------
         let provider_impl = ProviderImpl::new(&BC);
@@ -78,8 +87,6 @@ fn main() {
         if let Err(err) = file.read_to_end(&mut code) {
             panic!(err.to_string());
         }
-
-        BC.lock()?.commit();
 
         let params1: Vec<u8> = vec![
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -102,10 +109,10 @@ fn main() {
             );
             request.get().set_provider(provider);
         }
-        let promise = request.send().promise;
+        request.send().promise.await?;
 
-        println!("finished");
-        futures::future::try_join(rpc_system, promise).await?;
+        debug!("contract deployed.");
+        BC.lock()?.commit();
 
         Ok(())
     });

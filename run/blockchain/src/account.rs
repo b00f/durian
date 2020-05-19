@@ -1,5 +1,4 @@
 use primitive_types::{H256, U256};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use durian::address::Address;
 

@@ -374,6 +374,7 @@ dependencies = [
  "lazy_static",
  "log 0.4.8",
  "primitive-types",
+ "simple_logger",
 ]
 
 [[package]]
@@ -386,7 +387,9 @@ dependencies = [
  "capnpc",
  "durian",
  "futures 0.3.5",
+ "log 0.4.8",
  "primitive-types",
+ "simple_logger",
  "tokio 0.2.20",
  "tokio-util",
 ]

@@ -1,30 +1,74 @@
 use crate::durian_capnp;
-use capnp::capability::Promise;
 use durian::address::Address;
 use durian::provider::{Provider, StateAccount};
-use futures::channel::oneshot;
-use futures::task::LocalSpawn;
 use primitive_types::{H256, U256};
-use std::sync::mpsc;
-use tokio::runtime::Runtime;
+
+struct Error {
+    pub failed: String,
+}
+
+impl From<::capnp::Error> for Error {
+    fn from(error: ::capnp::Error) -> Self {
+        Error {
+            failed: error.description,
+        }
+    }
+}
+impl From<Error> for durian::error::Error {
+    fn from(error: Error) -> Self {
+        durian::error::Error::Other{msg:error.failed}
+    }
+}
 
 pub struct ProviderAdaptor {
-    client:  durian_capnp::provider::Client,
+    client: durian_capnp::provider::Client,
 }
 
 impl ProviderAdaptor {
-    pub fn new(client:  durian_capnp::provider::Client) -> Self {
+    pub fn new(client: durian_capnp::provider::Client) -> Self {
         ProviderAdaptor { client }
     }
 }
 
 impl Provider for ProviderAdaptor {
     fn exist(&self, address: &Address) -> bool {
-        self.account(address).is_ok()
+        let mut request = self.client.exist_request();
+        {
+            request.get().set_address(address.as_bytes());
+        }
+
+        let handle = async move {
+            debug!("Try ot call `exist` method in client");
+            let result = request.send().promise.await?;
+            let exist = result.get()?.get_exist();
+
+            Ok(exist)
+        };
+        let ret: Result<bool, ::capnp::Error> = futures::executor::block_on(handle);
+        match ret {
+            Ok(exist) => exist,
+            Err(_) => false,
+        }
     }
 
     fn account(&self, address: &Address) -> Result<StateAccount, durian::error::Error> {
-        Err(durian::error::Error::NotSupported)
+        let mut request = self.client.account_request();
+        {
+            request.get().set_address(address.as_bytes());
+        }
+        let handle = async move {
+            debug!("Try ot call `account` method in client");
+            let result = request.send().promise.await?;
+            let account = result.get()?.get_account()?;
+
+            Ok(StateAccount {
+                nonce: U256::from_little_endian(account.get_nonce()?),
+                balance: U256::from_little_endian(account.get_balance()?),
+                code: account.get_code()?.to_vec(),
+            })
+        };
+
+        futures::executor::block_on(handle).map_err(|e: Error| e.into())
     }
 
     fn create_contract(
@@ -32,41 +76,45 @@ impl Provider for ProviderAdaptor {
         address: &Address,
         code: &Vec<u8>,
     ) -> Result<(), durian::error::Error> {
-        Ok(())
+        let mut request = self.client.create_contract_request();
+        {
+            request.get().set_address(address.as_bytes());
+            request.get().set_code(code);
+        }
+        let handle = async move {
+            debug!("Try ot call `create` method in client");
+            request.send().promise.await?;
+
+            Ok(())
+        };
+
+        futures::executor::block_on(handle).map_err(|e: Error| e.into())
     }
 
     fn update_account(
         &mut self,
-        address: &Address,
-        bal: &U256,
-        nonce: &U256,
+        _address: &Address,
+        _bal: &U256,
+        _nonce: &U256,
     ) -> Result<(), durian::error::Error> {
         Ok(())
     }
 
     fn storage_at(&self, address: &Address, key: &H256) -> Result<H256, durian::error::Error> {
-        println!("{:?}:e1", std::thread::current().id());
-        let mut exec = futures::executor::LocalPool::new();
-
+        let mut request = self.client.storage_at_request();
+        {
+            request.get().set_address(address.as_bytes());
+            request.get().set_key(key.as_bytes());
+        }
         let handle = async move {
-            let storage_req = self.client.get_storage_request();
+            debug!("Try ot call `storage_at` method in client");
+            let result = request.send().promise.await?;
+            let storage = result.get()?.get_storage()?;
 
-            println!("{:?}:e3", std::thread::current().id());
-            let p = storage_req.send().promise;
-            println!("{:?}:e4", std::thread::current().id());
-
-            let storage_results = p.await.unwrap();
-            let storage = storage_results.get().unwrap().get_storage().unwrap();
-            println!("storage = {:?}", storage);
+            Ok(H256::from_slice(storage))
         };
-        let mut rt = Runtime::new().unwrap();
-        let local = tokio::task::LocalSet::new();
-        local.block_on(&mut rt, handle);
 
-
-        println!("e:3");
-
-        Err(durian::error::Error::NotSupported)
+        futures::executor::block_on(handle).map_err(|e: Error| e.into())
     }
 
     fn set_storage(
@@ -75,10 +123,23 @@ impl Provider for ProviderAdaptor {
         key: &H256,
         value: &H256,
     ) -> Result<(), durian::error::Error> {
-        Ok(())
+        let mut request = self.client.set_storage_request();
+        {
+            request.get().set_address(address.as_bytes());
+            request.get().set_key(key.as_bytes());
+            request.get().set_value(value.as_bytes());
+        }
+        let handle = async move {
+            debug!("Try ot call `storage_at` method in client");
+            request.send().promise.await?;
+
+            Ok(())
+        };
+
+        futures::executor::block_on(handle).map_err(|e: Error| e.into())
     }
 
-    fn block_hash(&self, num: u64) -> Result<H256, durian::error::Error> {
+    fn block_hash(&self, _num: u64) -> Result<H256, durian::error::Error> {
         Ok(H256::zero())
     }
 

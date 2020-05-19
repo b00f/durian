@@ -5,6 +5,7 @@ use capnp::capability::Promise;
 use capnp::Error;
 use durian::address::Address;
 use primitive_types::{H256, U256};
+use tokio::sync::oneshot;
 
 impl<'a> From<durian_capnp::transaction::Reader<'a>>
     for Result<durian::transaction::Transaction, Error>
@@ -47,27 +48,27 @@ impl ExecutorImpl {
 }
 
 unsafe impl Send for durian_capnp::provider::Client {}
-unsafe impl Sync for durian_capnp::provider::Client {}
+//unsafe impl Sync for durian_capnp::provider::Client {}
 
 impl executor::Server for ExecutorImpl {
     fn execute(
         &mut self,
         params: executor::ExecuteParams,
-        mut results: executor::ExecuteResults,
+        mut _results: executor::ExecuteResults,
     ) -> Promise<(), Error> {
         let provider_client = pry!(pry!(params.get()).get_provider());
         let transaction = pry!(pry!(pry!(params.get()).get_transaction()).into());
-        let (tx, rx) = std::sync::mpsc::channel();
+        let (tx, mut rx) = oneshot::channel();
 
-        std::thread::spawn(move || {
-            println!("{:?}:1", std::thread::current().id());
+        tokio::task::spawn(async move {
+            debug!("provider: {:?}", std::thread::current().id());
             let mut adaptor = ProviderAdaptor::new(provider_client);
 
             durian::execute::execute(&mut adaptor, &transaction).unwrap();
 
             tx.send("hooray, it executed ").unwrap();
         });
-        println!("{:?}:2", std::thread::current().id());
+        debug!("executor: {:?}", std::thread::current().id());
 
         Promise::from_future(async move {
             loop {
@@ -80,8 +81,10 @@ impl executor::Server for ExecutorImpl {
                         break;
                     }
                 };
-                tokio::task::yield_now().await;
-                // tokio::time::delay_for(Duration::from_millis(20 as u64)).await;
+
+                //print!(".");
+                //tokio::task::yield_now().await;
+                tokio::time::delay_for(std::time::Duration::from_millis(10 as u64)).await;
             }
 
             Ok(())
