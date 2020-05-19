@@ -82,7 +82,7 @@ impl Provider for ProviderAdaptor {
             request.get().set_code(code);
         }
         let handle = async move {
-            debug!("Try ot call `create` method in client");
+            debug!("Try ot call `create_contract` method in client");
             request.send().promise.await?;
 
             Ok(())
@@ -130,7 +130,7 @@ impl Provider for ProviderAdaptor {
             request.get().set_value(value.as_bytes());
         }
         let handle = async move {
-            debug!("Try ot call `storage_at` method in client");
+            debug!("Try ot call `set_storage` method in client");
             request.send().promise.await?;
 
             Ok(())
