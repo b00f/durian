@@ -33,7 +33,5 @@ pub use extractors::RpcExtractor;
 fn main(){
   // Start web3 RPC Endpoint
     let mut el = event_loop::event_loop();
-    let conf = rpc::HttpConfiguration::default();
-    let server = rpc::new_http("HTTP JSON-RPC", "jsonrpc", conf);
     el.run(event_loop::forever()).unwrap();
 }

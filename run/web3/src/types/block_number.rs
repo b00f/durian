@@ -32,7 +32,7 @@ pub enum BlockNumber {
 	/// Number
 	Num(u64),
 	/// Latest block
-	latest,
+	Latest,
 	/// Earliest block (genesis)
 	Earliest,
 	/// Pending block (being mined)
@@ -41,7 +41,7 @@ pub enum BlockNumber {
 
 impl Default for BlockNumber {
 	fn default() -> Self {
-		BlockNumber::latest
+		BlockNumber::Latest
 	}
 }
 
@@ -134,7 +134,7 @@ impl<'a> Visitor<'a> for BlockNumberVisitor {
 		E: Error,
 	{
 		match value {
-			"latest" => Ok(BlockNumber::latest),
+			"latest" => Ok(BlockNumber::Latest),
 			"earliest" => Ok(BlockNumber::Earliest),
 			"pending" => Ok(BlockNumber::Pending),
 			_ if value.starts_with("0x") => u64::from_str_radix(&value[2..], 16)

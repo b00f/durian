@@ -10,20 +10,20 @@ pub struct TxReceipt {
     /// Transaction index
     pub transaction_index: U256,
     /// Block hash
-    pub blockHash: H256,
+    pub block_hash: H256,
     /// Sender
     pub from: Address,
     /// Recipient
     pub to: H160,
     /// Block number
-    pub blockNumber: u32,
+    pub block_number: u32,
     /// Cumulative gas used
     /// Gas used
-    pub gasUsed: U256,
+    pub gas_used: U256,
     /// Contract address
-    pub contractAddress: H160,
+    pub contract_address: H160,
     /// Cumulative gas used
-    pub cumulativeGasUsed: U256,
+    pub cumulative_gas_used: U256,
 
     pub status: &'static str,
 }

@@ -3,7 +3,6 @@ use crate::rpc_service::{self as rpc, start_http};
 use blockchain::blockchain::Blockchain;
 use jsonrpc_core::{Compatibility, MetaIoHandler};
 pub use jsonrpc_http_server::{DomainsValidation, Server};
-use std::collections::HashSet;
 use std::io;
 
 /// RPC HTTP Server instance
@@ -92,33 +91,4 @@ fn into_domains<T: From<String>>(items: Option<Vec<String>>) -> DomainsValidatio
 	items
 		.map(|vals| vals.into_iter().map(T::from).collect())
 		.into()
-}
-
-fn with_domain(
-	items: Option<Vec<String>>,
-	domain: &str,
-	dapps_address: &Option<rpc::Host>,
-) -> Option<Vec<String>> {
-	fn extract_port(s: &str) -> Option<u16> {
-		s.split(':').nth(1).and_then(|s| s.parse().ok())
-	}
-
-	items.map(move |items| {
-		let mut items = items.into_iter().collect::<HashSet<_>>();
-		{
-			let mut add_hosts = |address: &Option<rpc::Host>| {
-				if let Some(host) = address.clone() {
-					items.insert(host.to_string());
-					items.insert(host.replace("127.0.0.1", "localhost"));
-					items.insert(format!("http://*.{}", domain)); //proxypac
-					if let Some(port) = extract_port(&*host) {
-						items.insert(format!("http://*.{}:{}", domain, port));
-					}
-				}
-			};
-
-			add_hosts(dapps_address);
-		}
-		items.into_iter().collect()
-	})
 }
