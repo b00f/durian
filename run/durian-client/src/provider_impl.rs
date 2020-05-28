@@ -54,9 +54,8 @@ impl<'a> provider::Server for ProviderImpl<'a> {
                 account_result.set_code(&account.code);
                 return Promise::ok(());
             }
-            Err(_e) => {
-                // TODO: How to return actual error
-                return Promise::err(::capnp::Error::failed("account failed".to_string()));
+            Err(e) => {
+                return Promise::err(::capnp::Error::failed(format!("{}", e)));
             }
         }
     }
@@ -71,14 +70,12 @@ impl<'a> provider::Server for ProviderImpl<'a> {
         let address = Address::from_slice(pry!(pry!(params.get()).get_address()));
         let code = pry!(pry!(params.get()).get_code()).to_vec();
 
-
         match self.bc.lock().unwrap().create_contract(&address, &code) {
             Ok(()) => {
                 return Promise::ok(());
             }
-            Err(_e) => {
-                // TODO: How to return actual error
-                return Promise::err(::capnp::Error::failed("account failed".to_string()));
+            Err(e) => {
+                return Promise::err(::capnp::Error::failed(format!("{}", e)));
             }
         }
     }
@@ -98,9 +95,8 @@ impl<'a> provider::Server for ProviderImpl<'a> {
                 results.get().set_storage(storage.as_bytes());
                 return Promise::ok(());
             }
-            Err(_e) => {
-                // TODO: How to return actual error
-                return Promise::err(::capnp::Error::failed("storageAt failed".to_string()));
+            Err(e) => {
+                return Promise::err(::capnp::Error::failed(format!("{}", e)));
             }
         }
     }
@@ -120,9 +116,8 @@ impl<'a> provider::Server for ProviderImpl<'a> {
             Ok(()) => {
                 return Promise::ok(());
             }
-            Err(_e) => {
-                // TODO: How to return actual error
-                return Promise::err(::capnp::Error::failed("storageAt failed".to_string()));
+            Err(e) => {
+                return Promise::err(::capnp::Error::failed(format!("{}", e)));
             }
         }
     }

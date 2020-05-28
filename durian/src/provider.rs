@@ -13,10 +13,8 @@ pub trait Provider {
     fn account(&self, address: &Address) -> Result<StateAccount, Error>;
     fn update_account(&mut self, address: &Address, bal: &U256, nonce: &U256) -> Result<(), Error>;
     fn create_contract(&mut self, address: &Address, code: &Vec<u8>) -> Result<(), Error>;
-
     fn storage_at(&self, address: &Address, key: &H256) -> Result<H256, Error>;
     fn set_storage(&mut self, address: &Address, key: &H256, value: &H256) -> Result<(), Error>;
-
     fn timestamp(&self) -> u64;
     fn block_number(&self) -> u64;
     fn block_hash(&self, block_no: u64) -> Result<H256, Error>;

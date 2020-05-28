@@ -31,7 +31,7 @@ struct LogEntry {
 
 struct ResultData {
   gasLeft @0: Data;
-  data @1: List(Int8);
+  data @1: Data;
   contract @2: Data;
   logs @3: List(LogEntry);
 }

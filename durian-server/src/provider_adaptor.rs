@@ -16,7 +16,7 @@ impl From<::capnp::Error> for Error {
 }
 impl From<Error> for durian::error::Error {
     fn from(error: Error) -> Self {
-        durian::error::Error::Other{msg:error.failed}
+        durian::error::Error::Other { msg: error.failed }
     }
 }
 
@@ -93,11 +93,31 @@ impl Provider for ProviderAdaptor {
 
     fn update_account(
         &mut self,
-        _address: &Address,
-        _bal: &U256,
-        _nonce: &U256,
+        address: &Address,
+        balance: &U256,
+        nonce: &U256,
     ) -> Result<(), durian::error::Error> {
-        Ok(())
+        let mut request = self.client.update_account_request();
+        {
+            let mut tmp = Vec::new();
+            tmp.resize(32, 0);
+
+            request.get().set_address(address.as_bytes());
+
+            balance.to_little_endian(&mut tmp);
+            request.get().set_balance(&tmp);
+
+            nonce.to_little_endian(&mut tmp);
+            request.get().set_nonce(&tmp);
+        }
+        let handle = async move {
+            debug!("Try ot call `update_account` method in client");
+            request.send().promise.await?;
+
+            Ok(())
+        };
+
+        futures::executor::block_on(handle).map_err(|e: Error| e.into())
     }
 
     fn storage_at(&self, address: &Address, key: &H256) -> Result<H256, durian::error::Error> {

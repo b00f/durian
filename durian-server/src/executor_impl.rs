@@ -54,7 +54,7 @@ impl executor::Server for ExecutorImpl {
     fn execute(
         &mut self,
         params: executor::ExecuteParams,
-        mut _results: executor::ExecuteResults,
+        mut results: executor::ExecuteResults,
     ) -> Promise<(), Error> {
         let provider_client = pry!(pry!(params.get()).get_provider());
         let transaction = pry!(pry!(pry!(params.get()).get_transaction()).into());
@@ -64,9 +64,9 @@ impl executor::Server for ExecutorImpl {
             debug!("provider: {:?}", std::thread::current().id());
             let mut adaptor = ProviderAdaptor::new(provider_client);
 
-            durian::execute::execute(&mut adaptor, &transaction).unwrap();
+            let result = durian::execute::execute(&mut adaptor, &transaction).unwrap();
 
-            tx.send("hooray, it executed ").unwrap();
+            tx.send(result).unwrap();
         });
         debug!("executor: {:?}", std::thread::current().id());
 
@@ -75,20 +75,32 @@ impl executor::Server for ExecutorImpl {
                 let msg = rx.try_recv();
                 match msg {
                     Err(_e) => {}
-                    Ok(msg) => {
-                        println!("tx data: {:?}", msg);
+                    Ok(result_data) => {
+                    tokio::time::delay_for(std::time::Duration::from_millis(10 as u64)).await;
+
+                        let mut tmp = Vec::new();
+                        tmp.resize(32, 0);
+
+                        let mut builder = results.get().get_result_data().unwrap();
+
+                        result_data.gas_left.to_little_endian(&mut tmp);
+                        builder.set_gas_left(&tmp);
+                        builder.set_data(&result_data.data);
+                        builder.set_contract(&result_data.contract.as_bytes());
+
+                        // TODO: Implement it later
+                        //builder.set_logs();
 
                         break;
                     }
                 };
 
                 //print!(".");
-                //tokio::task::yield_now().await;
-                tokio::time::delay_for(std::time::Duration::from_millis(10 as u64)).await;
+                tokio::task::yield_now().await;
+                //tokio::time::delay_for(std::time::Duration::from_millis(10 as u64)).await;
             }
 
             Ok(())
         })
-
     }
 }
