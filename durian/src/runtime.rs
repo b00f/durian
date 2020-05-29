@@ -313,7 +313,7 @@ impl<'a> Runtime<'a> {
 		result.resize(result_alloc_len as usize, 0);
 
 		// todo: optimize to use memory views once it's in
-		let payload = self.memory.get(input_ptr, input_len as usize)?;
+		let _payload = self.memory.get(input_ptr, input_len as usize)?;
 
 		let adjusted_gas = match gas
 			.checked_mul(self.schedule.wasm().opcodes_div as u64)
@@ -422,12 +422,14 @@ impl<'a> Runtime<'a> {
 		self.return_u256_ptr(args.nth_checked(0)?, val)
 	}
 
-	fn do_create(
+
+	#[allow(dead_code)]
+		fn do_create(
 		&mut self,
-		endowment: U256,
-		code_ptr: u32,
-		code_len: u32,
-		result_ptr: u32,
+		_endowment: U256,
+		_code_ptr: u32,
+		_code_len: u32,
+		_result_ptr: u32,
 	) -> Result<RuntimeValue, Error> {
 		// TODO: Not completed
 		/*
@@ -489,7 +491,7 @@ impl<'a> Runtime<'a> {
 	/// * code_ptr - pointer to the code data
 	/// * code_len - lenght of the code data
 	/// * result_ptr - pointer to write an address of the newly created contract
-	pub fn create(&mut self, args: RuntimeArgs) -> Result<RuntimeValue, Error> {
+	pub fn create(&mut self, _args: RuntimeArgs) -> Result<RuntimeValue, Error> {
 		//
 		// method signature:
 		//   fn create(endowment: *const u8, code_ptr: *const u8, code_len: u32, result_ptr: *mut u8) -> i32;
@@ -534,7 +536,7 @@ impl<'a> Runtime<'a> {
 
 	/// Pass suicide to state runtime
 	pub fn suicide(&mut self, args: RuntimeArgs) -> Result<(), Error> {
-		let refund_address = self.address_at(args.nth_checked(0)?)?;
+		let _refund_address = self.address_at(args.nth_checked(0)?)?;
 
 		// TODO: Not completed
 		/*
@@ -658,15 +660,18 @@ impl<'a> Runtime<'a> {
 				= H256::from_slice(&self.memory.get(offset, 32)?[..]);
 		}
 
-		// TODO: LOG?
-		//self.ext
-		//	.log(topics, &self.memory.get(data_ptr, data_len as usize)?)
-		//	.map_err(|_| Error::Log)?;
+		let data = self.memory.get(data_ptr, data_len as usize)?;
+
+		self.logs.push(LogEntry {
+			address: self.params.address.clone(),
+			topics: topics,
+			data: data.to_vec()
+		});
 
 		Ok(())
 	}
 
-	fn add_sstore_refund(&mut self, value: usize) {
+	fn add_sstore_refund(&mut self, _value: usize) {
 		// TODO: Better calculate the gas after flushing the state
 		//self.substate.sstore_clears_refund += value as i128;
 	}

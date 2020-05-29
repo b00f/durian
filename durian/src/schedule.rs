@@ -1,13 +1,7 @@
 
-use std::collections::HashMap;
 use primitive_types::U256;
 use wasm_cost::WasmCosts;
 
-/// Definition of schedules that can be applied to a version.
-#[derive(Debug)]
-pub enum VersionedSchedule {
-	PWasm,
-}
 
 /// Definition of the cost schedule and other parameterisations for the EVM.
 #[derive(Debug)]
@@ -123,13 +117,11 @@ pub struct Schedule {
 	pub eip1706: bool,
 	/// Latest VM version for contract creation transaction.
 	pub latest_version: U256,
-	/// All supported non-legacy VM versions.
-	pub versions: HashMap<U256, VersionedSchedule>,
 	/// Wasm extra schedule settings, if wasm activated
 	pub wasm: Option<WasmCosts>,
 }
 
-
+#[allow(dead_code)]
 /// Dust accounts cleanup mode.
 #[derive(Debug, PartialEq, Eq)]
 pub enum CleanDustMode {
@@ -145,103 +137,6 @@ impl Schedule {
 	/// Schedule for the Frontier-era of the Ethereum main net.
 	pub fn new_frontier() -> Schedule {
 		Self::new(false, false, 21000)
-	}
-
-	/// Schedule for the Homestead-era of the Ethereum main net.
-	pub fn new_homestead() -> Schedule {
-		Self::new(true, true, 53000)
-	}
-
-	/// Schedule for the post-EIP-150-era of the Ethereum main net.
-	pub fn new_post_eip150(max_code_size: usize, fix_exp: bool, no_empty: bool, kill_empty: bool) -> Schedule {
-		Schedule {
-			exceptional_failed_code_deposit: true,
-			have_delegate_call: true,
-			have_create2: false,
-			have_revert: false,
-			have_return_data: false,
-			have_bitwise_shifting: false,
-			have_chain_id: false,
-			have_selfbalance: false,
-			have_extcodehash: false,
-			stack_limit: 1024,
-			max_depth: 1024,
-			tier_step_gas: [0, 2, 3, 5, 8, 10, 20, 0],
-			exp_gas: 10,
-			exp_byte_gas: if fix_exp {50} else {10},
-			sha3_gas: 30,
-			sha3_word_gas: 6,
-			sload_gas: 200,
-			sstore_dirty_gas: None,
-			sstore_set_gas: 20000,
-			sstore_reset_gas: 5000,
-			sstore_refund_gas: 15000,
-			jumpdest_gas: 1,
-			log_gas: 375,
-			log_data_gas: 8,
-			log_topic_gas: 375,
-			create_gas: 32000,
-			call_gas: 700,
-			call_stipend: 2300,
-			call_value_transfer_gas: 9000,
-			call_new_account_gas: 25000,
-			suicide_refund_gas: 24000,
-			memory_gas: 3,
-			quad_coeff_div: 512,
-			create_data_gas: 200,
-			create_data_limit: max_code_size,
-			tx_gas: 21000,
-			tx_create_gas: 53000,
-			tx_data_zero_gas: 4,
-			tx_data_non_zero_gas: 68,
-			copy_gas: 3,
-			extcodesize_gas: 700,
-			extcodecopy_base_gas: 700,
-			extcodehash_gas: 400,
-			balance_gas: 400,
-			suicide_gas: 5000,
-			suicide_to_new_account_cost: 25000,
-			sub_gas_cap_divisor: Some(64),
-			no_empty: no_empty,
-			kill_empty: kill_empty,
-			blockhash_gas: 20,
-			have_static_call: false,
-			kill_dust: CleanDustMode::Off,
-			eip1283: false,
-			eip1706: false,
-			latest_version: U256::zero(),
-			versions: HashMap::new(),
-			wasm: None,
-		}
-	}
-
-	/// Schedule for the Byzantium fork of the Ethereum main net.
-	pub fn new_byzantium() -> Schedule {
-		let mut schedule = Self::new_post_eip150(24576, true, true, true);
-		schedule.have_create2 = true;
-		schedule.have_revert = true;
-		schedule.have_static_call = true;
-		schedule.have_return_data = true;
-		schedule
-	}
-
-	/// Schedule for the Constantinople fork of the Ethereum main net.
-	pub fn new_constantinople() -> Schedule {
-		let mut schedule = Self::new_byzantium();
-		schedule.have_bitwise_shifting = true;
-		schedule
-	}
-
-	/// Schedule for the Istanbul fork of the Ethereum main net.
-	pub fn new_istanbul() -> Schedule {
-		let mut schedule = Self::new_constantinople();
-		schedule.have_chain_id = true; // EIP 1344
-		schedule.tx_data_non_zero_gas = 16; // EIP 2028
-		schedule.sload_gas = 800; // EIP 1884
-		schedule.balance_gas = 700; // EIP 1884
-		schedule.extcodehash_gas = 700; // EIP 1884
-		schedule.have_selfbalance = true; // EIP 1884
-		schedule
 	}
 
 	fn new(efcd: bool, hdc: bool, tcg: usize) -> Schedule {
@@ -301,7 +196,6 @@ impl Schedule {
 			eip1283: false,
 			eip1706: false,
 			latest_version: U256::zero(),
-			versions: HashMap::new(),
 			wasm: None,
 		}
 	}

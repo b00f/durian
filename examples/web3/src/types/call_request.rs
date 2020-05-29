@@ -15,7 +15,7 @@ pub struct CallRequest {
 	/// To
 	pub to: Option<H160>,
 	/// Gas Price
-	pub gasPrice: Option<U256>,
+	pub gas_price: Option<U256>,
 	/// Gas
 	pub gas: Option<U256>,
 	/// Value
@@ -31,7 +31,7 @@ impl Into<Request> for CallRequest {
 		Request {
 			from: self.from.map(Into::into),
 			to: self.to.map(Into::into),
-			gas_price: self.gasPrice.map(Into::into),
+			gas_price: self.gas_price.map(Into::into),
 			gas: self.gas.map(Into::into),
 			value: self.value.map(Into::into),
 			data: self.data.map(Into::into),

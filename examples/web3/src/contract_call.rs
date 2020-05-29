@@ -36,13 +36,13 @@ pub fn transaction_recipit(bc: &mut Blockchain, params: H256) -> Result<TxReceip
 
 	let receipt = TxReceipt {
 		transaction_hash: params,
-		blockHash: bc.latest_block_hash(),
+		block_hash: bc.latest_block_hash(),
 		from: sender,
 		to: H160::zero(),
-		blockNumber: bc.block_number() as u32,
-		gasUsed: gas_left,
-		contractAddress: contract_address,
-		cumulativeGasUsed: gas_left,
+		block_number: bc.block_number() as u32,
+		gas_used: gas_left,
+		contract_address: contract_address,
+		cumulative_gas_used: gas_left,
 		transaction_index: u1,
 		status: "0x01",
 	};

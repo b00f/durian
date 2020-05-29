@@ -31,6 +31,7 @@ fn main() {
 
     bc.commit();
 
+    // deploy token contract
     let params1 = vec![
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -51,12 +52,10 @@ fn main() {
     //info!("ret1: {:?}", ret1);
     bc.inc_nonce("alice");
     bc.commit();
-
-    // transfer to bob: 0xa9059cbb
     let contract = ret1.contract;
-
     bc.add_transactions(tx1, ret1);
 
+    // transfer to bob: 0xa9059cbb
     let mut params2 = vec![0xa9, 0x05, 0x9c, 0xbb, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     params2.append(&mut bc.address_from_alias("bob").as_bytes_mut().to_vec());
     params2.append(&mut vec![
@@ -78,6 +77,8 @@ fn main() {
     info!("ret2: {:?}", ret2);
     bc.inc_nonce("alice");
     bc.commit();
+    bc.add_transactions(tx2, ret2);
+
 
     // total_supply: 0x18160ddd
     let params3 = vec![0x18, 0x16, 0x0d, 0xdd];
@@ -93,8 +94,10 @@ fn main() {
     info!("ret3: {:?}", ret3);
     bc.inc_nonce("alice");
     bc.commit();
+    bc.add_transactions(tx3, ret3);
 
-    // balance_f: 0x70a08231
+
+    // balance_of: 0x70a08231
     let mut params4 = vec![0x70, 0xa0, 0x82, 0x31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     params4.append(&mut bc.address_from_alias("bob").as_bytes_mut().to_vec());
 
@@ -110,4 +113,6 @@ fn main() {
     info!("ret4: {:?}", ret4);
     bc.inc_nonce("bob");
     bc.commit();
+    bc.add_transactions(tx4, ret4);
+
 }

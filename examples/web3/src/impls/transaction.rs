@@ -50,14 +50,14 @@ impl TransactionRPC for TransactionRPCImpl {
 	}
 
 	//Get the contract code address from the blockchain
-	fn code_at(&self, address: H160, num: Option<BlockNumber>) -> Result<Bytes> {
-		let mut bc = self.bc.lock().unwrap();
+	fn code_at(&self, address: H160, _: Option<BlockNumber>) -> Result<Bytes> {
+		let bc = self.bc.lock().unwrap();
 		let code_at = &bc.code_at(address);
 		let res = Bytes::new(code_at.to_vec());
 		Ok(res)
 	}
 
-	fn call(&self, request: CallRequest, num: Option<BlockNumber>) -> Result<Bytes> {
+	fn call(&self, request: CallRequest, _num: Option<BlockNumber>) -> Result<Bytes> {
 		let mut bc = self.bc.lock().unwrap();
 
 		let contract_address = request.to.unwrap();
