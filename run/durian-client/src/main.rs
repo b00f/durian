@@ -18,7 +18,7 @@ mod provider_impl;
 use blockchain::blockchain::Blockchain;
 use capnp_rpc::{rpc_twoparty_capnp, twoparty, RpcSystem};
 use durian::address::Address;
-use durian::Bytes;
+use durian::transaction::{Action, Transaction};
 use durian_capnp::executor;
 use futures::task::LocalSpawn;
 use futures::AsyncReadExt;
@@ -88,64 +88,170 @@ fn main() {
             panic!(err.to_string());
         }
 
+        info!("=== deploy token contract");
         let params1: Vec<u8> = vec![
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
             0xFF, 0xFF, 0xFF, 0xFF,
         ];
 
+        let tx1 = Transaction::make_create(
+            BC.lock()?.address_from_alias("alice"),
+            U256::zero(),
+            U256::from(1000000),
+            U256::zero(),
+            code,
+            params1,
+            H256::zero(),
+        );
+
         let mut request = executor.execute_request();
         {
             let mut builder = request.get().init_transaction();
-            build_create_tx(
-                &mut builder,
-                BC.lock()?.address_from_alias("alice"),
-                U256::zero(),
-                U256::from(1000000),
-                U256::zero(),
-                code,
-                params1,
-                H256::zero(),
-            );
-            request.get().set_provider(provider);
+            build_tx(&mut builder, &tx1);
+            request.get().set_provider(provider.clone());
         }
-        request.send().promise.await?;
+        let ret1: durian::execute::ResultData = request.send().promise.await?.get()?.into();
+        //info!("ret1: {:?}", ret1);
 
-        debug!("contract deployed.");
         BC.lock()?.commit();
+
+        BC.lock()?.inc_nonce("alice");
+        BC.lock()?.commit();
+        let contract = ret1.contract;
+        BC.lock()?.add_transactions(tx1, ret1);
+
+        // transfer to bob: 0xa9059cbb
+        info!("=== transfer to bob");
+        let mut params2 = vec![0xa9, 0x05, 0x9c, 0xbb, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        params2.append(&mut BC.lock()?.address_from_alias("bob").as_bytes_mut().to_vec());
+        params2.append(&mut vec![
+            0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+            0xFF, 0xFF, 0xFF, 0xFF,
+        ]);
+
+        let tx2 = Transaction::make_call(
+            BC.lock()?.address_from_alias("alice"),
+            contract,
+            U256::zero(),
+            U256::from(1000000),
+            U256::zero(),
+            params2,
+        );
+
+        let mut request = executor.execute_request();
+        {
+            let mut builder = request.get().init_transaction();
+            build_tx(&mut builder, &tx2);
+            request.get().set_provider(provider.clone());
+        }
+        let ret2: durian::execute::ResultData = request.send().promise.await?.get()?.into();
+        info!("ret2: {:?}", ret2);
+
+        BC.lock()?.inc_nonce("alice");
+        BC.lock()?.commit();
+        BC.lock()?.add_transactions(tx2, ret2);
+
+        // total_supply: 0x18160ddd
+        info!("=== total_supply");
+        let params3 = vec![0x18, 0x16, 0x0d, 0xdd];
+        let tx3 = Transaction::make_call(
+            BC.lock()?.address_from_alias("alice"),
+            contract,
+            U256::zero(),
+            U256::from(1000000),
+            U256::zero(),
+            params3,
+        );
+        let mut request = executor.execute_request();
+        {
+            let mut builder = request.get().init_transaction();
+            build_tx(&mut builder, &tx3);
+            request.get().set_provider(provider.clone());
+        }
+        let ret3: durian::execute::ResultData = request.send().promise.await?.get()?.into();
+        info!("ret3: {:?}", ret3);
+
+        BC.lock()?.inc_nonce("alice");
+        BC.lock()?.commit();
+        BC.lock()?.add_transactions(tx3, ret3);
+
+        // balance_of: 0x70a08231
+        info!("=== balance_of bob");
+        let mut params4 = vec![0x70, 0xa0, 0x82, 0x31, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        params4.append(&mut BC.lock()?.address_from_alias("bob").as_bytes_mut().to_vec());
+
+        let tx4 = Transaction::make_call(
+            BC.lock()?.address_from_alias("bob"),
+            contract,
+            U256::zero(),
+            U256::from(1000000),
+            U256::zero(),
+            params4,
+        );
+        let mut request = executor.execute_request();
+        {
+            let mut builder = request.get().init_transaction();
+            build_tx(&mut builder, &tx4);
+            request.get().set_provider(provider.clone());
+        }
+        let ret4: durian::execute::ResultData = request.send().promise.await?.get()?.into();
+        info!("ret4: {:?}", ret4);
+
+        BC.lock()?.inc_nonce("bob");
+        BC.lock()?.commit();
+        BC.lock()?.add_transactions(tx4, ret4);
 
         Ok(())
     });
 }
 
-fn build_create_tx(
-    builder: &mut durian_capnp::transaction::Builder,
-    sender: Address,
-    value: U256,
-    gas: U256,
-    gas_price: U256,
-    code: Bytes,
-    args: Bytes,
-    salt: H256,
-) {
+impl<'a> From<durian_capnp::executor::execute_results::Reader<'a>> for durian::execute::ResultData {
+    fn from(reader: durian_capnp::executor::execute_results::Reader<'a>) -> Self {
+        let gas_left =
+            U256::from_little_endian(reader.get_result_data().unwrap().get_gas_left().unwrap());
+        let data = reader.get_result_data().unwrap().get_data().unwrap();
+        let contract =
+            Address::from_slice(reader.get_result_data().unwrap().get_contract().unwrap());
+        let logs = vec![];
+
+        durian::execute::ResultData {
+            gas_left: gas_left,
+            data: data.to_vec(),
+            contract: contract,
+            logs: logs,
+        }
+    }
+}
+
+fn build_tx(builder: &mut durian_capnp::transaction::Builder, tx: &Transaction) {
     let mut tmp = Vec::new();
     tmp.resize(32, 0);
 
-    builder.set_sender(sender.as_bytes());
+    builder.set_sender(tx.sender.as_bytes());
 
-    value.to_little_endian(&mut tmp);
+    tx.value.to_little_endian(&mut tmp);
     builder.set_value(&tmp);
 
-    gas.to_little_endian(&mut tmp);
+    tx.gas.to_little_endian(&mut tmp);
     builder.set_gas(&tmp);
 
-    gas_price.to_little_endian(&mut tmp);
+    tx.gas_price.to_little_endian(&mut tmp);
     builder.set_gas_price(&tmp);
 
-    builder.set_args(&args);
+    builder.set_args(&tx.args);
 
     let action_builder = builder.reborrow().init_action();
-    let mut action_create_builder = action_builder.init_create();
-    action_create_builder.set_code(&code);
-    action_create_builder.set_salt(salt.as_bytes());
+    match &tx.action {
+        Action::Create(code, salt) => {
+            let mut create_builder = action_builder.init_create();
+            create_builder.set_code(&code);
+            create_builder.set_salt(salt.as_bytes());
+        }
+        Action::Call(address) => {
+            let mut call_builder = action_builder.init_call();
+            call_builder.set_address(address.as_bytes());
+        }
+    }
 }

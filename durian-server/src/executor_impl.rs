@@ -6,6 +6,7 @@ use capnp::Error;
 use durian::address::Address;
 use primitive_types::{H256, U256};
 use tokio::sync::oneshot;
+use tokio::sync::oneshot::error::TryRecvError;
 
 impl<'a> From<durian_capnp::transaction::Reader<'a>>
     for Result<durian::transaction::Transaction, Error>
@@ -74,9 +75,12 @@ impl executor::Server for ExecutorImpl {
             loop {
                 let msg = rx.try_recv();
                 match msg {
-                    Err(_e) => {}
+                    Err(TryRecvError::Empty) => {}
+                    Err(e) => {
+                        return Err(Error::failed(format!("{}", e)));
+                    }
                     Ok(result_data) => {
-                    tokio::time::delay_for(std::time::Duration::from_millis(10 as u64)).await;
+                        tokio::time::delay_for(std::time::Duration::from_millis(10 as u64)).await;
 
                         let mut tmp = Vec::new();
                         tmp.resize(32, 0);
