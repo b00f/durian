@@ -2,8 +2,9 @@
 
 Durian is a stateless VM based on [parity-wasm](https://github.com/paritytech/parity-wasm) for blockchains.
 
-TODO: HOW TO USE DURIAN
 
+## Dosumentation
+You can check [here](https://docs.google.com/document/d/11BOKAwnepo-LNQtJu7UphQ75VNIY83HjJIY2GtZTtEI/edit?usp=sharing) to see how durian works.
 
 ## Building
 
