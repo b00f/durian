@@ -78,7 +78,7 @@ fn main() {
         BC.lock()?.commit();
 
         // Deploy token contract
-        let file_path = "./run/cli/compiled-contracts/token.wasm";
+        let file_path = "./examples/cli/compiled-contracts/token.wasm";
         let mut file = match File::open(file_path) {
             Ok(file) => file,
             Err(err) => panic!(err.to_string()),
