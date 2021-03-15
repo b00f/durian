@@ -2,10 +2,6 @@
 
 Durian is a stateless VM based on [parity-wasm](https://github.com/paritytech/parity-wasm) for blockchains.
 
-
-## Dosumentation
-You can check [here](https://docs.google.com/document/d/11BOKAwnepo-LNQtJu7UphQ75VNIY83HjJIY2GtZTtEI/edit?usp=sharing) to see how durian works.
-
 ## Building
 
 Durian requires **latest stable Rust version** to build. You can install Rust through [rustup](https://www.rustup.rs/).
@@ -22,10 +18,43 @@ $ cd durian
 $ cargo build --release
 ```
 
+## How it works
+Durian is a stateless WASM Virtual Machine for Blockchain. But how does it work?
+
+A Blockchain has different parts that work together to create a chain of blocks.
+Executing smart contracts is one of the fundamental components of the blockchains.
+
+![Durian](./images/durian_1.png)
+
+Durian aims to make a standalone Virtual Machine for blockchains to execute smart contracts
+without access to the blockchain's state like accounts or block data.
+
+![Durian](./images/durian_2.png)
+
+For using Durian as a service, blockchain only need to implement the Durian Interface.
+
+![Durian](./images/durian_3.png)
+
+
+Durian uses Parity WASMI (Web Assembly Interpreter) to call and execute Smart contracts.
+Therefore smart contracts should follow the parity WASM (PWASM) standard.
+
+The main function in Durian is 'execute,' which accepts two input parameters. The first parameter is the transaction that includes information like sender address, gas limit, or smart contract code to be deployed or smart contract address to be called.
+
+The second parameter is the 'Provider' interface that Durian can use to get information from the blockchain like account or block data.
+If the execution is successful, Durian uses the Provider interface to update the blockchain and return the output logs. Otherwise, it immediately responds with a failure error.
+
+
+## Durian as a web service
+
+Durian can be run as a web service. In this scenario, blockchain, as a client, can call Durian to execute the smart contracts. Durian uses Cap'n Proto to implement RPC methods. The reason we chose Cap'n Proto is that it provides two-way communication between server and client. It is also faster compared to gRPC because it doesn't need to encode/decode messages between server and client.
+
+![Durian](./images/durian_4.png)
+
 
 ## Examples
 
-Some examples are provided inside the run folder.
+You can check [examples](https://github.com/b00f/durian/tree/master/examples) folder to see how a client can connect to a Durian server and deploy a simple token smart contract written by PWASM.
 
 ## License
 
